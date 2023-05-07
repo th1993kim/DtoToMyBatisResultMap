@@ -1,0 +1,26 @@
+
+<idea-plugin>
+    <id>com.codingdreamtree.DtoToMyBatisResultMap</id>
+    <name>DtoToMyBatisResultMap</name>
+    <version>0.1</version>
+    <vendor email="th1993kim@gmail.com" url="https://codingdreamtree.tistory.com/">코딩꿈나무</vendor>
+    <description>
+        <![CDATA[Dto, Entity를 MyBatis의 ResultMap으로 전환해주는 플러그인<br>]]>
+    </description>
+    <depends>com.intellij.modules.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+    </extensions>
+    <actions>
+        <action id="DtoToSingleResultMap" class="com.codingdreamtree.DtoToMyBatisResultMap.main.DtoToMyBatisResultMap"
+                text="ConvertDtoToSingleResultMap"
+                description="Convert DTO Class TO MyBatis ResultMap 1 TIMES">
+            <add-to-group group-id="GenerateGroup" anchor="first"/>
+        </action>
+        <action id="DtoToMultipleResultMap" class="com.codingdreamtree.DtoToMyBatisResultMap.main.DtoToMyBatisResultMap"
+                text="ConvertDtoToMultipleResultMap"
+                description="Convert DTO Class TO MyBatis ResultMap MAX 10 TIMES">
+            <add-to-group group-id="GenerateGroup" anchor="after"  relative-to-action="DtoToSingleResultMap"/>
+        </action>
+    </actions>
+</idea-plugin>
