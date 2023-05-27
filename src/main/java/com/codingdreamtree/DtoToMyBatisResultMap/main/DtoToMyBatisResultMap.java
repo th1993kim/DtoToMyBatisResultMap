@@ -1,6 +1,7 @@
 package com.codingdreamtree.DtoToMyBatisResultMap.main;
 
 import com.codingdreamtree.DtoToMyBatisResultMap.structure.ExtractResultMapDto;
+import com.codingdreamtree.DtoToMyBatisResultMap.structure.RelationalFieldInfo;
 import com.codingdreamtree.DtoToMyBatisResultMap.structure.ResultMapMenu;
 import com.codingdreamtree.DtoToMyBatisResultMap.structure.ResultMapStructure;
 import com.codingdreamtree.DtoToMyBatisResultMap.util.TypeCheckUtil;
@@ -71,9 +72,9 @@ public class DtoToMyBatisResultMap extends AnAction {
                 return;
             }
             resultMap.put(className, null);
-            List<String> fieldList = new ArrayList<>();
-            List<String> associationList = new ArrayList<>();
-            List<String> collectionList = new ArrayList<>();
+            List<PsiField> fieldList = new ArrayList<>();
+            List<RelationalFieldInfo> associationList = new ArrayList<>();
+            List<RelationalFieldInfo> collectionList = new ArrayList<>();
 
             PsiField[] fields = psiClass.getFields();
             Arrays.stream(fields)
@@ -81,18 +82,17 @@ public class DtoToMyBatisResultMap extends AnAction {
                             {
                                 PsiType type = field.getType();
                                 String canonicalText = type.getCanonicalText();
-                                String fieldName = field.getName();
                                 if (type instanceof PsiPrimitiveType) {
-                                    fieldList.add(fieldName);
+                                    fieldList.add(field);
                                 }
                                 if (type instanceof PsiClassType) {
                                     PsiClass fieldClass = ((PsiClassType) type).resolve();
                                     if (isCommonClass(canonicalText, fieldClass)) {
-                                        fieldList.add(fieldName);
+                                        fieldList.add(field);
                                     } else if (TypeCheckUtil.isCollection(canonicalText)) {
-                                        collectionList.add(fieldName);
                                         PsiType parameter = ((PsiClassType) type).getParameters()[0];
                                         PsiClass genericClass = ((PsiClassType) parameter).resolve();
+                                        collectionList.add(new RelationalFieldInfo(field, genericClass));
                                         extractResultMap(ExtractResultMapDto.builder()
                                                 .psiClass(genericClass)
                                                 .resultMap(resultMap)
@@ -101,7 +101,7 @@ public class DtoToMyBatisResultMap extends AnAction {
                                                 .build());
 
                                     } else {
-                                        associationList.add(fieldName);
+                                        associationList.add(new RelationalFieldInfo(field, fieldClass));
                                         extractResultMap(ExtractResultMapDto.builder()
                                                 .psiClass(fieldClass)
                                                 .resultMap(resultMap)
@@ -136,9 +136,13 @@ public class DtoToMyBatisResultMap extends AnAction {
     @NotNull
     private String createPrefixName(String prefixName, PsiClass psiClass) {
         if (psiClass != null && psiClass.getName() != null) {
-            return prefixName + CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, psiClass.getName()) + "_";
+            return prefixName + getFirstCharLowerCase(psiClass.getName()) + "_";
         }
         return prefixName;
+    }
+    @NotNull
+    private String getFirstCharLowerCase(String originName) {
+        return originName.substring(0, 1).toLowerCase() + originName.substring(1);
     }
 
     @Override

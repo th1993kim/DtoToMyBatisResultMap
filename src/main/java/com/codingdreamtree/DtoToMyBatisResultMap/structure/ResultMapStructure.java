@@ -1,5 +1,7 @@
 package com.codingdreamtree.DtoToMyBatisResultMap.structure;
 
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -9,11 +11,11 @@ public class ResultMapStructure {
     private String packageName;
     private String className;
     private String prefixName;
-    private List<String> fieldList;
-    private List<String> associationList;
-    private List<String> collectionList;
+    private List<PsiField> fieldList;
+    private List<RelationalFieldInfo> associationList;
+    private List<RelationalFieldInfo> collectionList;
 
-    public ResultMapStructure(String packageName, String className, String prefixName, List<String> fieldList, List<String> associationList, List<String> collectionList) {
+    public ResultMapStructure(String packageName, String className, String prefixName, List<PsiField> fieldList, List<RelationalFieldInfo> associationList, List<RelationalFieldInfo> collectionList) {
         this.packageName = packageName;
         this.className = className;
         this.prefixName = prefixName;
@@ -41,33 +43,25 @@ public class ResultMapStructure {
         return this.prefixName;
     }
 
-    public List<String> getFieldList() {
+    public List<PsiField> getFieldList() {
         return this.fieldList;
     }
 
-    public List<String> getAssociationList() {
+    public List<RelationalFieldInfo> getAssociationList() {
         return this.associationList;
     }
 
-    public List<String> getCollectionList() {
+    public List<RelationalFieldInfo> getCollectionList() {
         return this.collectionList;
-    }
-
-    public String getJoinColumnAlias() {
-        if (StringUtils.isEmpty(prefixName)) {
-            return "";
-        }
-
-        return " AS " + prefixName;
     }
 
     public static class ResultMapStructureBuilder {
         private String packageName;
         private String className;
         private String prefixName;
-        private List<String> fieldList;
-        private List<String> associationList;
-        private List<String> collectionList;
+        private List<PsiField> fieldList;
+        private List<RelationalFieldInfo> associationList;
+        private List<RelationalFieldInfo> collectionList;
 
         ResultMapStructureBuilder() {
         }
@@ -87,17 +81,17 @@ public class ResultMapStructure {
             return this;
         }
 
-        public ResultMapStructureBuilder fieldList(List<String> fieldList) {
+        public ResultMapStructureBuilder fieldList(List<PsiField> fieldList) {
             this.fieldList = fieldList;
             return this;
         }
 
-        public ResultMapStructureBuilder associationList(List<String> associationList) {
+        public ResultMapStructureBuilder associationList(List<RelationalFieldInfo> associationList) {
             this.associationList = associationList;
             return this;
         }
 
-        public ResultMapStructureBuilder collectionList(List<String> collectionList) {
+        public ResultMapStructureBuilder collectionList(List<RelationalFieldInfo> collectionList) {
             this.collectionList = collectionList;
             return this;
         }
@@ -110,4 +104,13 @@ public class ResultMapStructure {
             return "ResultMapStructure.ResultMapStructureBuilder(packageName=" + this.packageName + ", className=" + this.className + ", prefixName=" + this.prefixName + ", fieldList=" + this.fieldList + ", associationList=" + this.associationList + ", collectionList=" + this.collectionList + ")";
         }
     }
+
+    public String getJoinColumnAlias(String fieldName) {
+        if (StringUtils.isEmpty(prefixName)) {
+            return "";
+        }
+
+        return " AS " + prefixName + fieldName;
+    }
+
 }

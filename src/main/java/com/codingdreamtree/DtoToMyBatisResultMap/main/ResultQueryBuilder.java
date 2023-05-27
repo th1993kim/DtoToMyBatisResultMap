@@ -4,7 +4,10 @@ import com.codingdreamtree.DtoToMyBatisResultMap.structure.ResultMapStructure;
 import com.google.common.base.CaseFormat;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ResultQueryBuilder {
     public ResultQueryBuilder() {
@@ -33,24 +36,35 @@ public class ResultQueryBuilder {
     }
 
     private String createSelectColumnsQuery(Map<String, ResultMapStructure> resultMap) {
-        StringBuilder resultMapBuilder = new StringBuilder();
+        List<String> selectColumnQueryList = new ArrayList<>();
         resultMap.forEach((className, resultMapStructure) -> {
-            final String dbName = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, className);
-            resultMapStructure.getFieldList()
-                    .forEach(field ->
-                            resultMapBuilder.append(dbName)
-                                    .append(".")
-                                    .append(field)
-                                    .append(resultMapStructure.getJoinColumnAlias())
-                                    .append(field)
-                                    .append(",\n"));
+            final String dbName = getLowerSnakeName(className);
+
+            List<String> selectColumnQueryResultList = resultMapStructure.getFieldList()
+                    .stream()
+                    .map(field -> {
+                        StringBuilder selectColumnQueryBuilder = new StringBuilder();
+                        selectColumnQueryBuilder.append(dbName)
+                                .append(".")
+                                .append(getLowerSnakeName(field.getName()))
+                                .append(resultMapStructure.getJoinColumnAlias(getLowerSnakeName(field.getName())));
+                        return getStringBuilderResult(selectColumnQueryBuilder);
+                    })
+                    .collect(Collectors.toList());
+
+            selectColumnQueryList.addAll(selectColumnQueryResultList);
         });
 
-        return getStringBuilderResult(resultMapBuilder);
+        return String.join(",\n", selectColumnQueryList) + "\n";
     }
     private String createFromQuery(String firstClassName) {
-        final String dbName = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, firstClassName);
+        final String dbName = getLowerSnakeName(firstClassName);
         return "FROM " + dbName + " " + dbName + "\n";
+    }
+
+    @NotNull
+    private String getLowerSnakeName(String originalName) {
+        return CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, originalName);
     }
 
     private String createJoinQuery(Map<String, ResultMapStructure> resultMap) {
@@ -59,7 +73,7 @@ public class ResultQueryBuilder {
         for (int i = 0; i < classNameArray.length; i++) {
             if (i == 0) continue;
 
-            final String dbName = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, classNameArray[i]);
+            final String dbName = getLowerSnakeName(classNameArray[i]);
             queryBuilder.append("JOIN ")
                     .append(dbName)
                     .append(" ")
