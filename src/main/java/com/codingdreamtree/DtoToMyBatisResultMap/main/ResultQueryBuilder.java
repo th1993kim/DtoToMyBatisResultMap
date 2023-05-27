@@ -37,14 +37,13 @@ public class ResultQueryBuilder {
         resultMap.forEach((className, resultMapStructure) -> {
             final String dbName = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, className);
             resultMapStructure.getFieldList()
-                    .forEach(field -> {
-                        resultMapBuilder.append(dbName)
-                                .append(".")
-                                .append(field)
-                                .append(resultMapStructure.getJoinColumnAlias())
-                                .append(field)
-                                .append(",\n");
-                    });
+                    .forEach(field ->
+                            resultMapBuilder.append(dbName)
+                                    .append(".")
+                                    .append(field)
+                                    .append(resultMapStructure.getJoinColumnAlias())
+                                    .append(field)
+                                    .append(",\n"));
         });
 
         return getStringBuilderResult(resultMapBuilder);
