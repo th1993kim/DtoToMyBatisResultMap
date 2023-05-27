@@ -7,31 +7,20 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TypeCheckUtil {
-    private static final String JAVA_TIME_LOCAL_DATE = "java.time.LocalDate";
-    private static final String JAVA_TIME_LOCAL_DATETIME = "java.time.LocalDateTime";
-    private static final String JAVA_TIME_ZONED_DATE = "java.time.ZonedDate";
-    private static final String JAVA_TIME_ZONED_DATETIME = "java.time.ZonedDateTime";
 
     private static final Set<String> JAVA_TIME_SET = new HashSet<>() {
         {
-            add(JAVA_TIME_LOCAL_DATE);
-            add(JAVA_TIME_LOCAL_DATETIME);
-            add(JAVA_TIME_ZONED_DATE);
-            add(JAVA_TIME_ZONED_DATETIME);
+            add(CommonClassNamesTwo.JAVA_TIME_LOCAL_DATE);
+            add(CommonClassNamesTwo.JAVA_TIME_LOCAL_DATETIME);
+            add(CommonClassNamesTwo.JAVA_TIME_ZONED_DATE);
+            add(CommonClassNamesTwo.JAVA_TIME_ZONED_DATETIME);
         }
     };
 
-    private static final Set<String> WRAPPER_CLASS_SET = new HashSet<>() {
+    private static final Set<String> CHAR_CLASS_SET = new HashSet<>() {
         {
-            add(CommonClassNames.JAVA_LANG_NUMBER);
-            add(CommonClassNames.JAVA_LANG_BOOLEAN);
-            add(CommonClassNames.JAVA_LANG_BYTE);
-            add(CommonClassNames.JAVA_LANG_SHORT);
-            add(CommonClassNames.JAVA_LANG_INTEGER);
-            add(CommonClassNames.JAVA_LANG_LONG);
-            add(CommonClassNames.JAVA_LANG_FLOAT);
-            add(CommonClassNames.JAVA_LANG_DOUBLE);
             add(CommonClassNames.JAVA_LANG_CHARACTER);
+            add(CommonClassNames.JAVA_LANG_STRING);
         }
     };
 
@@ -55,6 +44,34 @@ public class TypeCheckUtil {
         }
     };
 
+    private static final Set<String> NUMBER_CLASS_SET = new HashSet<>() {
+        {
+
+            add(CommonClassNames.JAVA_LANG_NUMBER);
+            add(CommonClassNames.JAVA_LANG_BYTE);
+            add(CommonClassNames.JAVA_LANG_SHORT);
+            add(CommonClassNames.JAVA_LANG_INTEGER);
+            add(CommonClassNames.JAVA_LANG_LONG);
+            add(CommonClassNames.JAVA_LANG_FLOAT);
+            add(CommonClassNames.JAVA_LANG_DOUBLE);
+            add(CommonClassNamesTwo.BYTE);
+            add(CommonClassNamesTwo.SHORT);
+            add(CommonClassNamesTwo.INT);
+            add(CommonClassNamesTwo.LONG);
+            add(CommonClassNamesTwo.FLOAT);
+            add(CommonClassNamesTwo.DOUBLE);
+            add(CommonClassNamesTwo.JAVA_MATH_BIG_DECIMAL);
+            add(CommonClassNamesTwo.JAVA_MATH_BIG_INTEGER);
+        }
+    };
+
+    private static final Set<String> BOOLEAN_CLASS_SET = new HashSet<>() {
+        {
+            add(CommonClassNamesTwo.JAVA_LANG_BOOLEAN);
+            add(CommonClassNamesTwo.BOOLEAN);
+        }
+    };
+
 
     public static boolean isTimeClass(String canonicalText) {
         return JAVA_TIME_SET.contains(canonicalText);
@@ -65,17 +82,19 @@ public class TypeCheckUtil {
                 .anyMatch(canonicalText::contains);
     }
 
-    public static boolean isWrapperClass(String canonicalText) {
-        return WRAPPER_CLASS_SET.contains(canonicalText);
-    }
-
-
-    public static boolean isString(String canonicalText) {
-        return CommonClassNames.JAVA_LANG_STRING.equals(canonicalText);
+    public static boolean isCharClass(String canonicalText) {
+        return CHAR_CLASS_SET.contains(canonicalText);
     }
 
     public static boolean isEnumClass(PsiClass fieldClass) {
         return fieldClass != null && fieldClass.isEnum();
     }
 
+    public static boolean isNumberClass(String canonicalText) {
+        return NUMBER_CLASS_SET.contains(canonicalText);
+    }
+
+    public static boolean isBooleanClass(String canonicalText) {
+        return BOOLEAN_CLASS_SET.contains(canonicalText);
+    }
 }

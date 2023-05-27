@@ -9,7 +9,7 @@
                 <p>Enter your Class File(Dto),  Mouse Right Click Generate Menu</p><br>
                 <p>You can see ConvertDtoToSingleResultMap, ConvertDtoToMultipleResultMap</p><br>
                 <p>If Click ConvertDtoToSingleResultMap, Only This class Converted On Your Clipboard</p><br>
-                <p>If Click ConvertDtoToMultipleResultMap, Recursive search You Class And Converted On Your Clipboard (10Times)</p><br>
+                <p>If Click ConvertDtoToMultipleResultMap, Recursive search Your Class And Converted On Your Clipboard (10Times)</p><br>
         ]]>
     </description>
     <depends>com.intellij.modules.java</depends>

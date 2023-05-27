@@ -1,5 +1,6 @@
 package com.codingdreamtree.DtoToMyBatisResultMap.main;
 
+import com.codingdreamtree.DtoToMyBatisResultMap.structure.ExtractResultMapDto;
 import com.codingdreamtree.DtoToMyBatisResultMap.structure.ResultMapMenu;
 import com.codingdreamtree.DtoToMyBatisResultMap.structure.ResultMapStructure;
 import com.codingdreamtree.DtoToMyBatisResultMap.util.TypeCheckUtil;
@@ -22,6 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DtoToMyBatisResultMap extends AnAction {
 
 
+    private final ResultMapBuilder resultMapBuilder = new ResultMapBuilder();
+    private final ResultQueryBuilder resultQueryBuilder = new ResultQueryBuilder();
+
     @Override
     public void actionPerformed(AnActionEvent e) {
 
@@ -37,34 +41,41 @@ public class DtoToMyBatisResultMap extends AnAction {
 
         PsiClass psiClass = PsiTreeUtil.getParentOfType(currentCaretElement, PsiClass.class);
         int maxRecursiveCount = resultMapMenu.getMaxRecursiveCount();
-        AtomicInteger maxCount = new AtomicInteger(maxRecursiveCount);
-        Map<String, ResultMapStructure> resultMap = new HashMap<>();
-        extractResultMap(psiClass, resultMap, maxCount);
-        String resultMapString =  createResultMapBuilder(resultMap);
-
+        ExtractResultMapDto extractResultMapDto = ExtractResultMapDto.builder()
+                .psiClass(psiClass)
+                .resultMap(new LinkedHashMap<>())
+                .prefixName("")
+                .maxCount(new AtomicInteger(maxRecursiveCount))
+                .build();
+        extractResultMap(extractResultMapDto);
+        String resultMapString = resultMapBuilder.createResultMapBuilder(extractResultMapDto.getResultMap());
+        String resultQueryString = resultQueryBuilder.createResultQueryBuilder(extractResultMapDto.getResultMap());
         Toolkit.getDefaultToolkit()
                 .getSystemClipboard()
-                .setContents(new StringSelection(resultMapString), null);
+                .setContents(new StringSelection(resultMapString + resultQueryString), null);
     }
 
-    private void extractResultMap(PsiClass aClass, Map<String, ResultMapStructure> resultMap, AtomicInteger maxCount) {
-        if (maxCount.get() <= 0) {
+    private void extractResultMap(ExtractResultMapDto extractResultMapDto) {
+        AtomicInteger maxCount = extractResultMapDto.getMaxCount();
+        PsiClass psiClass = extractResultMapDto.getPsiClass();
+        String prefixName = extractResultMapDto.getPrefixName();
+        Map<String, ResultMapStructure> resultMap = extractResultMapDto.getResultMap();
+        if (maxCount.getAndAdd(-1) <= 0) {
             return;
         }
-        maxCount.set(maxCount.get() - 1);
-        String className = aClass.getName();
-
+        String className = psiClass.getName();
         if (StringUtils.isNotBlank(className)) {
-            String packageName = aClass.getQualifiedName();
-            String resultMapName = getResultMapName(className);
-            if (resultMap.containsKey(resultMapName)) {
+
+            String packageName = psiClass.getQualifiedName();
+            if (resultMap.containsKey(className)) {
                 return;
             }
+            resultMap.put(className, null);
             List<String> fieldList = new ArrayList<>();
             List<String> associationList = new ArrayList<>();
             List<String> collectionList = new ArrayList<>();
 
-            PsiField[] fields = aClass.getFields();
+            PsiField[] fields = psiClass.getFields();
             Arrays.stream(fields)
                     .forEach(field ->
                             {
@@ -76,19 +87,27 @@ public class DtoToMyBatisResultMap extends AnAction {
                                 }
                                 if (type instanceof PsiClassType) {
                                     PsiClass fieldClass = ((PsiClassType) type).resolve();
-                                    if (TypeCheckUtil.isWrapperClass(canonicalText)
-                                            || TypeCheckUtil.isString(canonicalText)
-                                            || TypeCheckUtil.isTimeClass(canonicalText)
-                                            || TypeCheckUtil.isEnumClass(fieldClass)) {
+                                    if (isCommonClass(canonicalText, fieldClass)) {
                                         fieldList.add(fieldName);
                                     } else if (TypeCheckUtil.isCollection(canonicalText)) {
                                         collectionList.add(fieldName);
                                         PsiType parameter = ((PsiClassType) type).getParameters()[0];
                                         PsiClass genericClass = ((PsiClassType) parameter).resolve();
-                                        extractResultMap(genericClass, resultMap, maxCount);
+                                        extractResultMap(ExtractResultMapDto.builder()
+                                                .psiClass(genericClass)
+                                                .resultMap(resultMap)
+                                                .prefixName(createPrefixName(prefixName, genericClass))
+                                                .maxCount(maxCount)
+                                                .build());
+
                                     } else {
                                         associationList.add(fieldName);
-                                        extractResultMap(fieldClass, resultMap, maxCount);
+                                        extractResultMap(ExtractResultMapDto.builder()
+                                                .psiClass(fieldClass)
+                                                .resultMap(resultMap)
+                                                .prefixName(createPrefixName(prefixName, fieldClass))
+                                                .maxCount(maxCount)
+                                                .build());
                                     }
                                 }
                             }
@@ -97,87 +116,29 @@ public class DtoToMyBatisResultMap extends AnAction {
             ResultMapStructure resultMapStructure = ResultMapStructure.builder()
                     .className(className)
                     .packageName(packageName)
+                    .prefixName(prefixName)
                     .fieldList(fieldList)
                     .associationList(associationList)
                     .collectionList(collectionList)
                     .build();
 
-            resultMap.put(resultMapName, resultMapStructure);
+            resultMap.put(className, resultMapStructure);
         }
     }
 
-
-    private String createResultMapBuilder(Map<String, ResultMapStructure> resultMap) {
-        final StringBuilder resultMapBuilder = new StringBuilder();
-
-        resultMap.forEach((mapName, resultMapStructure) -> {
-            resultMapBuilder.append("<resultMap id=\"")
-                    .append(mapName)
-                    .append("\" type=\"")
-                    .append(resultMapStructure.getPackageName())
-                    .append("\"> \n")
-                    .append(createFieldResultMap(resultMapStructure.getFieldList()))
-                    .append(createAssociationResultMap(resultMapStructure.getAssociationList()))
-                    .append(createCollectionResultMap(resultMapStructure.getCollectionList()));
-            resultMapBuilder.append("</resultMap>\n\n\n");
-        });
-
-        String result = resultMapBuilder.toString();
-        resultMapBuilder.setLength(0);
-        return result;
-    }
-
-    private String createFieldResultMap(List<String> fieldList) {
-        StringBuilder resultMapBuilder = new StringBuilder();
-        fieldList.forEach(field -> {
-            resultMapBuilder.append("\t<result column=\"")
-                    .append(CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, field))
-                    .append("\" property=\"")
-                    .append(field)
-                    .append("\"/>\n");
-        });
-        String result = resultMapBuilder.toString();
-        resultMapBuilder.setLength(0);
-        return result;
-    }
-
-    private String createAssociationResultMap(List<String> associationList) {
-        StringBuilder resultMapBuilder = new StringBuilder();
-        associationList.forEach(field -> {
-            resultMapBuilder.append("\t<association property=\"")
-                    .append(field)
-                    .append("\" columnPrefix=\"")
-                    .append(field)
-                    .append("_\" resultMap=\"")
-                    .append(field)
-                    .append("Map")
-                    .append("\"/>\n");
-        });
-        String result = resultMapBuilder.toString();
-        resultMapBuilder.setLength(0);
-        return result;
-    }
-
-    private String createCollectionResultMap(List<String> collectionList) {
-        StringBuilder resultMapBuilder = new StringBuilder();
-        collectionList.forEach(field -> {
-            resultMapBuilder.append("\t<collection property=\"")
-                    .append(field)
-                    .append("\" columnPrefix=\"")
-                    .append(field)
-                    .append("_\" resultMap=\"")
-                    .append(field)
-                    .append("Map")
-                    .append("\"/>\n");
-        });
-        String result = resultMapBuilder.toString();
-        resultMapBuilder.setLength(0);
-        return result;
+    private boolean isCommonClass(String canonicalText, PsiClass fieldClass) {
+        return TypeCheckUtil.isCharClass(canonicalText)
+                || TypeCheckUtil.isNumberClass(canonicalText)
+                || TypeCheckUtil.isTimeClass(canonicalText)
+                || TypeCheckUtil.isEnumClass(fieldClass);
     }
 
     @NotNull
-    private String getResultMapName(String className) {
-        return className.substring(0, 1).toLowerCase() + className.substring(1) + "Map";
+    private String createPrefixName(String prefixName, PsiClass psiClass) {
+        if (psiClass != null && psiClass.getName() != null) {
+            return prefixName + CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, psiClass.getName()) + "_";
+        }
+        return prefixName;
     }
 
     @Override
