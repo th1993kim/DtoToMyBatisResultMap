@@ -1,7 +1,6 @@
 package com.codingdreamtree.DtoToMyBatisResultMap.structure;
 
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
