@@ -6,7 +6,7 @@
     <change-notes><![CDATA[
     <h2>New Features</h2>
     <ul>
-      <li>Add MyBatis Select Query Generate With Result Map</li>
+      <li>Add Generate MyBatis Select Query With Result Map</li>
     </ul>
     <h2>Bug Fixes</h2>
     <ul>
