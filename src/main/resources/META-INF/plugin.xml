@@ -2,7 +2,20 @@
 <idea-plugin>
     <id>com.codingdreamtree.DtoToMyBatisResultMap</id>
     <name>DtoToMyBatisResultMap</name>
-    <version>1.1</version>
+    <version>1.2</version>
+    <change-notes><![CDATA[
+    <h2>New Features</h2>
+    <ul>
+      <li>Add MyBatis Select Query Generate With Result Map</li>
+    </ul>
+    <h2>Bug Fixes</h2>
+    <ul>
+      <li>Code Refactoring</li>
+      <li>Add Type BigInteger, BigDecimal</li>
+    </ul>
+    ]]>
+    </change-notes>
+
     <vendor email="th1993kim@gmail.com" url="https://codingdreamtree.tistory.com/">코딩꿈나무</vendor>
     <description>
         <![CDATA[<h3>Convert Dto,Entity Class To MyBatis Result Map</h3><br>
